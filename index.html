@@ -176,8 +176,8 @@ body.modo-apres #btn-sair-apres{display:block;}
 .btn-vlt{background:var(--vlt);color:#fff;}
 .btn-sm{padding:5px 10px;font-size:9px;}
 .btn:disabled{opacity:.4;cursor:not-allowed;}
-.btn-instalar{display:none;}
-.btn-instalar.show{display:inline-flex;}
+.btn-instalar{display:inline-flex;}
+.btn-instalar.hide{display:none!important;}
 
 /* ── PAGES ── */
 .pg{display:none;padding:24px;}
@@ -5426,17 +5426,21 @@ function configurarInstalacaoPWA() {
   if (!btn) return;
 
   const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-  if (standalone) btn.classList.remove('show');
+  if (standalone) {
+    btn.classList.add('hide');
+    return;
+  }
+  btn.classList.remove('hide');
 
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     DEFERRED_PWA_PROMPT = e;
-    btn.classList.add('show');
+    btn.classList.remove('hide');
   });
 
   window.addEventListener('appinstalled', () => {
     DEFERRED_PWA_PROMPT = null;
-    btn.classList.remove('show');
+    btn.classList.add('hide');
     toast('ok', '📲 Aplicativo instalado com sucesso');
   });
 }
@@ -5452,7 +5456,7 @@ async function instalarPWA() {
       toast('inf', 'Instalação cancelada');
     }
     DEFERRED_PWA_PROMPT = null;
-    if (btn) btn.classList.remove('show');
+    if (btn) btn.classList.remove('hide');
     return;
   }
 
@@ -5462,7 +5466,13 @@ async function instalarPWA() {
     return;
   }
 
-  toast('warn', 'Instalação indisponível no momento. Atualize a página e tente novamente.');
+  const isChromium = /chrome|edg|opr/i.test(navigator.userAgent);
+  if (isChromium) {
+    toast('inf', 'Use o menu do navegador (⋮) e clique em "Instalar aplicativo"');
+    return;
+  }
+
+  toast('warn', 'Seu navegador pode não suportar instalação direta de PWA.');
 }
 
 // ══════════════════════════════════════════════════════════════
