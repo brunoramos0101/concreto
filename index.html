@@ -176,6 +176,8 @@ body.modo-apres #btn-sair-apres{display:block;}
 .btn-vlt{background:var(--vlt);color:#fff;}
 .btn-sm{padding:5px 10px;font-size:9px;}
 .btn:disabled{opacity:.4;cursor:not-allowed;}
+.btn-instalar{display:none;}
+.btn-instalar.show{display:inline-flex;}
 
 /* ── PAGES ── */
 .pg{display:none;padding:24px;}
@@ -689,6 +691,7 @@ body.tema-claro #pag-bar .pag-range{background:var(--surf);}
     <button class="btn btn-ghost btn-sm hide-mobile" onclick="abrirBuscaGlobal()" title="Busca global (Ctrl+K)">⌕ <span class="hide-mobile">BUSCAR</span><span class="sg-kbd" style="margin-left:4px;">Ctrl+K</span></button>
     <button class="btn btn-ghost btn-sm" id="btn-apresentacao" onclick="toggleApresentacao()" title="Modo Apresentação">⛶ <span class="hide-mobile">APRESENTAR</span></button>
     <button class="btn btn-ghost btn-sm" id="btn-tema" onclick="toggleTema()" title="Alternar tema claro/escuro">☀</button>
+    <button class="btn btn-ghost btn-sm btn-instalar" id="btn-instalar" onclick="instalarPWA()" title="Instalar aplicativo">⬇ <span class="hide-mobile">INSTALAR</span></button>
     <button class="btn btn-ghost btn-sm" onclick="sincronizar()" title="Sincronizar">↺ <span class="hide-mobile">SYNC</span></button>
     <button class="btn btn-ghost btn-sm" onclick="abrirExport()" title="Exportar">↑ <span class="hide-mobile">EXPORTAR</span></button>
     <button class="btn btn-primary btn-sm" onclick="abrirAdd()" title="Novo Documento">+ <span class="hide-mobile">NOVO DOC</span></button>
@@ -5416,6 +5419,52 @@ function renderGantt() {
   container.innerHTML = html;
 }
 
+let DEFERRED_PWA_PROMPT = null;
+
+function configurarInstalacaoPWA() {
+  const btn = document.getElementById('btn-instalar');
+  if (!btn) return;
+
+  const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  if (standalone) btn.classList.remove('show');
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    DEFERRED_PWA_PROMPT = e;
+    btn.classList.add('show');
+  });
+
+  window.addEventListener('appinstalled', () => {
+    DEFERRED_PWA_PROMPT = null;
+    btn.classList.remove('show');
+    toast('ok', '📲 Aplicativo instalado com sucesso');
+  });
+}
+
+async function instalarPWA() {
+  const btn = document.getElementById('btn-instalar');
+  if (DEFERRED_PWA_PROMPT) {
+    DEFERRED_PWA_PROMPT.prompt();
+    const choice = await DEFERRED_PWA_PROMPT.userChoice;
+    if (choice?.outcome === 'accepted') {
+      toast('ok', '✅ Instalação iniciada');
+    } else {
+      toast('inf', 'Instalação cancelada');
+    }
+    DEFERRED_PWA_PROMPT = null;
+    if (btn) btn.classList.remove('show');
+    return;
+  }
+
+  const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  if (isIos) {
+    toast('inf', 'No iPhone/iPad: Compartilhar -> Adicionar à Tela de Início');
+    return;
+  }
+
+  toast('warn', 'Instalação indisponível no momento. Atualize a página e tente novamente.');
+}
+
 // ══════════════════════════════════════════════════════════════
 //  TEMA CLARO/ESCURO
 // ══════════════════════════════════════════════════════════════
@@ -5482,7 +5531,10 @@ window.onload = () => {
   // 3. Tenta conectar em background — sem travar nada
   setTimeout(() => sincronizar(), 800);
 
-  // 4. Registrar Service Worker (PWA offline)
+  // 4. Configura botão de instalação do PWA
+  configurarInstalacaoPWA();
+
+  // 5. Registrar Service Worker (PWA offline)
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
   }
