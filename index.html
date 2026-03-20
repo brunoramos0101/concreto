@@ -792,9 +792,10 @@ body.tema-claro #pag-bar .pag-range{background:var(--surf);}
     <div style="display:flex;gap:8px;"><button class="btn btn-ghost btn-sm" onclick="sincronizar()">↺ SYNC</button><button class="btn btn-primary btn-sm" onclick="abrirAdd()">+ NOVO DOCUMENTO</button></div>
   </div>
   <div id="banner-prazos" style="display:none;margin-bottom:14px;"></div>
-  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;">
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px;">
     <div style="background:var(--red-d);border:1px solid rgba(244,63,94,.2);border-radius:10px;padding:12px;display:flex;align-items:center;gap:10px;"><span>🔴</span><div><div style="font-size:9px;font-family:var(--mono);color:var(--red);letter-spacing:1px;">REPROVADOS</div><div style="font-family:var(--mono);font-size:20px;font-weight:700;color:#fff;" id="m-rep">—</div></div></div>
     <div style="background:var(--amb-d);border:1px solid rgba(245,158,11,.2);border-radius:10px;padding:12px;display:flex;align-items:center;gap:10px;"><span>🟠</span><div><div style="font-size:9px;font-family:var(--mono);color:var(--amb);letter-spacing:1px;">PENDENTES</div><div style="font-family:var(--mono);font-size:20px;font-weight:700;color:#fff;" id="m-pen">—</div></div></div>
+    <div style="background:var(--cyn-d);border:1px solid rgba(6,182,212,.2);border-radius:10px;padding:12px;display:flex;align-items:center;gap:10px;"><span>🔄</span><div><div style="font-size:9px;font-family:var(--mono);color:var(--cyn);letter-spacing:1px;">EM TRAMITAÇÃO</div><div style="font-family:var(--mono);font-size:20px;font-weight:700;color:#fff;" id="m-tra">—</div></div></div>
     <div style="background:var(--grn-d);border:1px solid rgba(16,185,129,.2);border-radius:10px;padding:12px;display:flex;align-items:center;gap:10px;"><span>✅</span><div><div style="font-size:9px;font-family:var(--mono);color:var(--grn);letter-spacing:1px;">APROVADOS</div><div style="font-family:var(--mono);font-size:20px;font-weight:700;color:#fff;" id="m-apr">—</div></div></div>
     <div style="background:var(--blu-d);border:1px solid rgba(59,130,246,.2);border-radius:10px;padding:12px;display:flex;align-items:center;gap:10px;"><span>📊</span><div><div style="font-size:9px;font-family:var(--mono);color:var(--blu);letter-spacing:1px;">TOTAL GERAL</div><div style="font-family:var(--mono);font-size:20px;font-weight:700;color:#fff;" id="m-tot">—</div></div></div>
   </div>
@@ -833,7 +834,7 @@ body.tema-claro #pag-bar .pag-range{background:var(--surf);}
         </select>
       </div>
     </div>
-    <div style="overflow-x:auto;"><table><thead><tr><th onclick="sortTable('acoes','doc')" style="cursor:pointer;">Documento / Atividade <span id="si-doc"></span></th><th onclick="sortTable('acoes','status')" style="cursor:pointer;">Status <span id="si-status"></span></th><th onclick="sortTable('acoes','finalidade')" style="cursor:pointer;">Finalidade Devolução <span id="si-finalidade"></span></th><th onclick="sortTable('acoes','exec')" style="cursor:pointer;">Responsável <span id="si-exec"></span></th><th onclick="sortTable('acoes','d')" style="cursor:pointer;text-align:center;">Prazo <span id="si-d"></span></th><th>Execução</th><th style="text-align:center;">Origem</th><th onclick="sortTable('acoes','contrato')" style="cursor:pointer;">EWP / ATIVO <span id="si-ewp"></span></th><th style="text-align:right">Ações</th></tr></thead><tbody id="tbody"></tbody></table></div>
+    <div style="overflow-x:auto;"><table><thead><tr><th onclick="sortTable('acoes','doc')" style="cursor:pointer;">Documento / Atividade <span id="si-doc"></span></th><th onclick="sortTable('acoes','status')" style="cursor:pointer;">Status <span id="si-status"></span></th><th onclick="sortTable('acoes','finalidade')" style="cursor:pointer;">Finalidade Devolução <span id="si-finalidade"></span></th><th onclick="sortTable('acoes','exec')" style="cursor:pointer;">Responsável <span id="si-exec"></span></th><th onclick="sortTable('acoes','d')" style="cursor:pointer;text-align:center;">Prazo <span id="si-d"></span></th><th onclick="sortTable('acoes','dataPostagemOrd')" style="cursor:pointer;text-align:center;">Data Postagem <span id="si-post"></span></th><th>Execução</th><th style="text-align:center;">Origem</th><th onclick="sortTable('acoes','contrato')" style="cursor:pointer;">EWP / ATIVO <span id="si-ewp"></span></th><th style="text-align:right">Ações</th></tr></thead><tbody id="tbody"></tbody></table></div>
     <div class="tf"><span class="tf-t" id="t-count">—</span><span class="tf-t" id="t-ts">—</span></div>
     <div id="pag-bar"></div>
   </div>
@@ -2162,6 +2163,19 @@ async function sincronizar() {
 // Converte qualquer valor do Sheets para string segura
 function ss_(v) { return (v === null || v === undefined || v === false) ? '' : String(v).trim(); }
 function int_(v) { const n = parseInt(v); return isNaN(n) ? 0 : n; }
+function ordDate_(v) {
+  const s = ss_(v);
+  if (!s) return 0;
+  const iso = new Date(s);
+  if (!Number.isNaN(iso.getTime())) return iso.getTime();
+  const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if (!m) return s;
+  const dd = String(m[1]).padStart(2,'0');
+  const mm = String(m[2]).padStart(2,'0');
+  const yy = m[3].length === 2 ? `20${m[3]}` : m[3];
+  const d = new Date(`${yy}-${mm}-${dd}T00:00:00`);
+  return Number.isNaN(d.getTime()) ? s : d.getTime();
+}
 
 function normalizeAcao(r) {
   return {
@@ -2176,6 +2190,8 @@ function normalizeAcao(r) {
     finalidade:   ss_(r.finalidade || r.Finalidade)    || '',
     dataAprov:    ss_(r.dataAprov  || r.DataAprovacao) || '',
     dataDevolucao:ss_(r.dataDevolucao||r.DataDevolucao)|| '',
+    dataPostagem: ss_(r.dataPostagem || r.DataPostagem || r.dataPost || r.DataPost || r.dtPostagem || r.DtPostagem) || '',
+    dataPostagemOrd: ordDate_(r.dataPostagem || r.DataPostagem || r.dataPost || r.DataPost || r.dtPostagem || r.DtPostagem),
     ativo:        ss_(r.ativo      || r.Ativo)         || 'ACESSO KM 266',
     contrato:     ss_(r.contrato   || r.Contrato)      || 'PACOTE 5',
     referencia:   ss_(r.referencia || r.Referencia)    || '',
@@ -2358,6 +2374,7 @@ function calcStats() {
   return {
     reprovados: ACOES.filter(a=>a.status==='Reprovado CDOC').length,
     pendentes:  ACOES.filter(a=>a.status==='Pendente Revisão').length,
+    tramitacao: ACOES.filter(a=>a.status!=='Aprovado / Certificado' && a.status!=='Não emitido').length,
     campo:      ACOES.filter(a=>a.status==='Inspeção de Campo').length,
     aprovados:  ACOES.filter(a=>a.status==='Aprovado / Certificado').length,
     bloqueados: ACOES.filter(a=>a.status==='Não emitido').length,
@@ -2369,6 +2386,7 @@ function calcStatsFrom(list) {
   return {
     reprovados: list.filter(a=>a.status==='Reprovado CDOC').length,
     pendentes:  list.filter(a=>a.status==='Pendente Revisão').length,
+    tramitacao: list.filter(a=>a.status!=='Aprovado / Certificado' && a.status!=='Não emitido').length,
     campo:      list.filter(a=>a.status==='Inspeção de Campo').length,
     aprovados:  list.filter(a=>a.status==='Aprovado / Certificado').length,
     bloqueados: list.filter(a=>a.status==='Não emitido').length,
@@ -2413,7 +2431,7 @@ function renderKPIs() {
   const _pct = sDash.total > 0 ? Math.round((sDash.aprovados / sDash.total) * 100) : 0;
   setEl('k-pct', _pct + '%');
   setEl('m-rep',sAll.reprovados); setEl('m-pen',sAll.pendentes);
-  setEl('m-apr',sAll.aprovados);  setEl('m-tot',sAll.total);
+  setEl('m-tra',sAll.tramitacao); setEl('m-apr',sAll.aprovados); setEl('m-tot',sAll.total);
   const criticos = sDash.reprovados + sDash.pendentes;
   document.title = criticos > 0 ? `(${criticos}) SUCENA | QMS Pro` : 'SUCENA | QMS Pro';
 }
@@ -3431,15 +3449,25 @@ function renderTab() {
   const sif = document.getElementById('si-finalidade'); if (sif) sif.innerHTML = sortIcon('acoes','finalidade');
   const sie = document.getElementById('si-exec'); if (sie) sie.innerHTML = sortIcon('acoes','exec');
   const sip = document.getElementById('si-d'); if (sip) sip.innerHTML = sortIcon('acoes','d');
+  const sipost = document.getElementById('si-post'); if (sipost) sipost.innerHTML = sortIcon('acoes','dataPostagemOrd');
   const siewp = document.getElementById('si-ewp'); if (siewp) siewp.innerHTML = sortIcon('acoes','contrato');
   tbody.innerHTML=''; let count=0;
   let lista = ACOES.filter(item=>{
     if(filtroTab!=='TODOS' && item.status!==filtroTab) return;
-    if(busca && !(`${item.doc} ${item.exec} ${item.ativo||''} ${item.contrato||''} ${item.referencia||''} ${item.status||''} ${item.finalidade||''}`).toLowerCase().includes(busca)) return false;
+    const postStr = item.dataPostagem || item.data_postagem || item.dataPost || item.dtPostagem || item.postagem || '';
+    if(busca && !(`${item.doc} ${item.exec} ${item.ativo||''} ${item.contrato||''} ${item.referencia||''} ${item.status||''} ${item.finalidade||''} ${postStr}`).toLowerCase().includes(busca)) return false;
     if(origF && item.origem!==origF) return false;
     if(ativoF && (item.ativo||'')!==ativoF) return false;
     if(contratoF && (item.contrato||'')!==contratoF) return false;
     return true;
+  });
+  lista = lista.map(item => {
+    const postRaw = item.dataPostagem || item.data_postagem || item.dataPost || item.dtPostagem || item.postagem || '';
+    return {
+      ...item,
+      _postRaw: postRaw,
+      dataPostagemOrd: item.dataPostagemOrd || ordDate_(postRaw),
+    };
   });
   lista = aplicarOrdem(lista, 'acoes');
   const totalFiltrado = lista.length;
@@ -3459,6 +3487,7 @@ function renderTab() {
     const obs = escHtml(item.obs || '');
     const exec = escHtml(item.exec);
     const prazo = escHtml(pl);
+    const dataPostagem = escHtml(fmtDatePt(item._postRaw) || '—');
     const origem = escHtml(item.origem);
     const ativo = escHtml(item.ativo || '—');
     const contrato = escHtml(item.contrato || '—');
@@ -3472,13 +3501,14 @@ function renderTab() {
       <td style="text-align:center;">${finBadge}</td>
       <td><div style="display:flex;align-items:center;gap:8px;"><div class="av" style="background:${ac}18;color:${ac};border-color:${ac}30;">${ini}</div><span style="font-size:12px;font-weight:500;">${exec}</span></div></td>
       <td style="text-align:center;"><span class="pchip ${pc}">${prazo}</span></td>
+      <td style="text-align:center;"><span style="font-family:var(--mono);font-size:10px;color:var(--txt2);">${dataPostagem}</span></td>
       <td style="min-width:175px;"><select class="exec-sel" onchange="atualizarExec('${idJs}',this.value,this)">${exOpts}</select></td>
       <td style="text-align:center;"><span class="badge b-gry" style="font-size:8px;">${origem}</span></td>
       <td><div style="font-size:10px;color:var(--txt2);">${contrato}</div><div style="font-size:10px;color:var(--txt3);margin-top:2px;">${ativo}</div></td>
       <td><div class="ra"><button class="ib" onclick="editarAcao('${idJs}')" title="Editar">✏️</button><button class="ib dl" onclick="pedirDel('${idJs}','acao')" title="Excluir">🗑</button></div></td>
     </tr>`;
   });
-  if(count===0) tbody.innerHTML=`<tr><td colspan="9"><div class="empty"><div class="ei">📭</div><div class="et">Nenhum registro</div><div class="ed">Ajuste os filtros ou adicione um novo documento</div></div></td></tr>`;
+  if(count===0) tbody.innerHTML=`<tr><td colspan="10"><div class="empty"><div class="ei">📭</div><div class="et">Nenhum registro</div><div class="ed">Ajuste os filtros ou adicione um novo documento</div></div></td></tr>`;
   setEl('t-count', totalFiltrado > PAGE_ST.size
     ? `PÁG ${PAGE_ST.page}/${Math.ceil(totalFiltrado/PAGE_ST.size)} — ${totalFiltrado} DOCS`
     : `${totalFiltrado} DE ${ACOES.length} REGISTROS`);
