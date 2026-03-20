@@ -792,9 +792,10 @@ body.tema-claro #pag-bar .pag-range{background:var(--surf);}
     <div style="display:flex;gap:8px;"><button class="btn btn-ghost btn-sm" onclick="sincronizar()">↺ SYNC</button><button class="btn btn-primary btn-sm" onclick="abrirAdd()">+ NOVO DOCUMENTO</button></div>
   </div>
   <div id="banner-prazos" style="display:none;margin-bottom:14px;"></div>
-  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px;">
+  <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:18px;">
     <div style="background:var(--red-d);border:1px solid rgba(244,63,94,.2);border-radius:10px;padding:12px;display:flex;align-items:center;gap:10px;"><span>🔴</span><div><div style="font-size:9px;font-family:var(--mono);color:var(--red);letter-spacing:1px;">REPROVADOS</div><div style="font-family:var(--mono);font-size:20px;font-weight:700;color:#fff;" id="m-rep">—</div></div></div>
     <div style="background:var(--amb-d);border:1px solid rgba(245,158,11,.2);border-radius:10px;padding:12px;display:flex;align-items:center;gap:10px;"><span>🟠</span><div><div style="font-size:9px;font-family:var(--mono);color:var(--amb);letter-spacing:1px;">PENDENTES</div><div style="font-family:var(--mono);font-size:20px;font-weight:700;color:#fff;" id="m-pen">—</div></div></div>
+    <div style="background:var(--vlt-d);border:1px solid rgba(139,92,246,.25);border-radius:10px;padding:12px;display:flex;align-items:center;gap:10px;"><span>🧾</span><div><div style="font-size:9px;font-family:var(--mono);color:var(--vlt);letter-spacing:1px;">AVALIAÇÃO SUCENA</div><div style="font-family:var(--mono);font-size:20px;font-weight:700;color:#fff;" id="m-avs">—</div></div></div>
     <div style="background:var(--cyn-d);border:1px solid rgba(6,182,212,.2);border-radius:10px;padding:12px;display:flex;align-items:center;gap:10px;"><span>🔄</span><div><div style="font-size:9px;font-family:var(--mono);color:var(--cyn);letter-spacing:1px;">EM TRAMITAÇÃO</div><div style="font-family:var(--mono);font-size:20px;font-weight:700;color:#fff;" id="m-tra">—</div></div></div>
     <div style="background:var(--grn-d);border:1px solid rgba(16,185,129,.2);border-radius:10px;padding:12px;display:flex;align-items:center;gap:10px;"><span>✅</span><div><div style="font-size:9px;font-family:var(--mono);color:var(--grn);letter-spacing:1px;">APROVADOS</div><div style="font-family:var(--mono);font-size:20px;font-weight:700;color:#fff;" id="m-apr">—</div></div></div>
     <div style="background:var(--blu-d);border:1px solid rgba(59,130,246,.2);border-radius:10px;padding:12px;display:flex;align-items:center;gap:10px;"><span>📊</span><div><div style="font-size:9px;font-family:var(--mono);color:var(--blu);letter-spacing:1px;">TOTAL GERAL</div><div style="font-family:var(--mono);font-size:20px;font-weight:700;color:#fff;" id="m-tot">—</div></div></div>
@@ -805,6 +806,7 @@ body.tema-claro #pag-bar .pag-range{background:var(--surf);}
         <button class="tp act" onclick="setTab(this,'TODOS')">TODOS</button>
         <button class="tp" onclick="setTab(this,'Reprovado CDOC')">REPROVADOS</button>
         <button class="tp" onclick="setTab(this,'Pendente Revisão')">PENDÊNCIAS</button>
+        <button class="tp" onclick="setTab(this,'Avaliação Sucena')">AVALIAÇÃO SUCENA</button>
         <button class="tp" onclick="setTab(this,'Inspeção de Campo')">CAMPO</button>
         <button class="tp" onclick="setTab(this,'Atualização Mapa Rastreabilidade')">MAPA RASTREAB.</button>
         <button class="tp" onclick="setTab(this,'Aguardando Documentos')">AG. DOCUMENTOS</button>
@@ -1373,6 +1375,7 @@ body.tema-claro #pag-bar .pag-range{background:var(--surf);}
           <select class="fc" id="f-status" onchange="toggleStatusCustom(this)">
             <option>Reprovado CDOC</option>
             <option>Pendente Revisão</option>
+            <option>Avaliação Sucena</option>
             <option>Em Análise CDOC</option>
             <option>Em Análise Engenharia</option>
             <option>Inspeção de Campo</option>
@@ -1879,6 +1882,7 @@ const AV_COLORS = ['#3b82f6','#8b5cf6','#10b981','#f59e0b','#f43f5e','#06b6d4','
 const ST_CFG = {
   'Reprovado CDOC':                  { b:'b-red', l:'REPROVADO' },
   'Pendente Revisão':                { b:'b-amb', l:'PENDENTE'  },
+  'Avaliação Sucena':                { b:'b-vlt', l:'AVALIAÇÃO SUCENA' },
   'Em Análise CDOC':                 { b:'b-blu', l:'ANÁLISE CDOC' },
   'Em Análise Engenharia':           { b:'b-vlt', l:'ANÁLISE ENG.' },
   'Inspeção de Campo':               { b:'b-cyn', l:'CAMPO'  },
@@ -1891,6 +1895,7 @@ const ST_CFG = {
 };
 const DOT = {
   'Reprovado CDOC':'#f43f5e','Pendente Revisão':'#f59e0b',
+  'Avaliação Sucena':'#8b5cf6',
   'Em Análise CDOC':'#3b82f6','Em Análise Engenharia':'#8b5cf6',
   'Inspeção de Campo':'#06b6d4','Aprovado / Certificado':'#10b981',
   'Não emitido':'#475569','Atualização Mapa Rastreabilidade':'#8b5cf6',
@@ -2163,6 +2168,11 @@ async function sincronizar() {
 // Converte qualquer valor do Sheets para string segura
 function ss_(v) { return (v === null || v === undefined || v === false) ? '' : String(v).trim(); }
 function int_(v) { const n = parseInt(v); return isNaN(n) ? 0 : n; }
+function normStatus_(v) { return ss_(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase(); }
+function isStatusAprovado_(v) { return normStatus_(v).includes('APROVADO'); }
+function isStatusReprovado_(v) { return normStatus_(v).includes('REPROVADO'); }
+function isStatusAvaliacaoSucena_(v) { return normStatus_(v) === 'AVALIACAO SUCENA'; }
+function isStatusPendenteGeral_(v) { return !isStatusAprovado_(v) && !isStatusReprovado_(v); }
 function ordDate_(v) {
   const s = ss_(v);
   if (!s) return 0;
@@ -2372,11 +2382,12 @@ function renderTudo() {
 // ══════════════════════════════════════════════════════════════
 function calcStats() {
   return {
-    reprovados: ACOES.filter(a=>a.status==='Reprovado CDOC').length,
-    pendentes:  ACOES.filter(a=>a.status==='Pendente Revisão').length,
+    reprovados: ACOES.filter(a=>isStatusReprovado_(a.status)).length,
+    pendentes:  ACOES.filter(a=>isStatusPendenteGeral_(a.status)).length,
+    avaliacaoSucena: ACOES.filter(a=>isStatusAvaliacaoSucena_(a.status)).length,
     tramitacao: ACOES.filter(a=>a.status!=='Aprovado / Certificado' && a.status!=='Não emitido').length,
     campo:      ACOES.filter(a=>a.status==='Inspeção de Campo').length,
-    aprovados:  ACOES.filter(a=>a.status==='Aprovado / Certificado').length,
+    aprovados:  ACOES.filter(a=>isStatusAprovado_(a.status)).length,
     bloqueados: ACOES.filter(a=>a.status==='Não emitido').length,
     total:      ACOES.length,
   };
@@ -2384,11 +2395,12 @@ function calcStats() {
 
 function calcStatsFrom(list) {
   return {
-    reprovados: list.filter(a=>a.status==='Reprovado CDOC').length,
-    pendentes:  list.filter(a=>a.status==='Pendente Revisão').length,
+    reprovados: list.filter(a=>isStatusReprovado_(a.status)).length,
+    pendentes:  list.filter(a=>isStatusPendenteGeral_(a.status)).length,
+    avaliacaoSucena: list.filter(a=>isStatusAvaliacaoSucena_(a.status)).length,
     tramitacao: list.filter(a=>a.status!=='Aprovado / Certificado' && a.status!=='Não emitido').length,
     campo:      list.filter(a=>a.status==='Inspeção de Campo').length,
-    aprovados:  list.filter(a=>a.status==='Aprovado / Certificado').length,
+    aprovados:  list.filter(a=>isStatusAprovado_(a.status)).length,
     bloqueados: list.filter(a=>a.status==='Não emitido').length,
     total:      list.length,
   };
@@ -2431,7 +2443,7 @@ function renderKPIs() {
   const _pct = sDash.total > 0 ? Math.round((sDash.aprovados / sDash.total) * 100) : 0;
   setEl('k-pct', _pct + '%');
   setEl('m-rep',sAll.reprovados); setEl('m-pen',sAll.pendentes);
-  setEl('m-tra',sAll.tramitacao); setEl('m-apr',sAll.aprovados); setEl('m-tot',sAll.total);
+  setEl('m-avs',sAll.avaliacaoSucena); setEl('m-tra',sAll.tramitacao); setEl('m-apr',sAll.aprovados); setEl('m-tot',sAll.total);
   const criticos = sDash.reprovados + sDash.pendentes;
   document.title = criticos > 0 ? `(${criticos}) SUCENA | QMS Pro` : 'SUCENA | QMS Pro';
 }
@@ -3417,7 +3429,7 @@ function renderProgress(lista) {
 
 function renderActivity() {
   const el=document.getElementById('act-feed'); if(!el) return;
-  const icons={'Reprovado CDOC':'🔴','Pendente Revisão':'🟠','Inspeção de Campo':'🔵','Aprovado / Certificado':'✅','Não emitido':'⛔','Atualização Mapa Rastreabilidade':'🗺️','Aguardando Documentos':'📁','Aguardando Termo de Aceite':'📝','Aguardando Baixa HSMWEB':'⚙️'};
+  const icons={'Reprovado CDOC':'🔴','Pendente Revisão':'🟠','Avaliação Sucena':'🧾','Inspeção de Campo':'🔵','Aprovado / Certificado':'✅','Não emitido':'⛔','Atualização Mapa Rastreabilidade':'🗺️','Aguardando Documentos':'📁','Aguardando Termo de Aceite':'📝','Aguardando Baixa HSMWEB':'⚙️'};
   const lista = [...ACOES].reverse().slice(0,5);
   if (!lista.length) {
     el.innerHTML = '<div class="feed-empty">Sem atividade recente registrada.</div>';
@@ -4178,7 +4190,7 @@ function atualizarSelectStatus() {
   if(!sel) return;
   const cv = sel.value;
   // Manter opções fixas + customizadas
-  const fixos = ['Reprovado CDOC','Pendente Revisão','Em Análise CDOC','Em Análise Engenharia',
+  const fixos = ['Reprovado CDOC','Pendente Revisão','Avaliação Sucena','Em Análise CDOC','Em Análise Engenharia',
     'Inspeção de Campo','Atualização Mapa Rastreabilidade','Aguardando Documentos',
     'Aguardando Termo de Aceite','Aguardando Baixa HSMWEB','Não emitido','Aprovado / Certificado'];
   sel.innerHTML = [...fixos, ...STATUS_CUSTOM].map(s=>
